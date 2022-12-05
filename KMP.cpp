@@ -38,7 +38,7 @@ void LPS(string pi, vector<int>& Lps) {
     }
 }
 
-void KMP(string pattern, string pi) {
+int KMP(string pattern, string pi) {
     
     bool isInFile = false;
     unsigned long long n = pi.length();
@@ -49,6 +49,7 @@ void KMP(string pattern, string pi) {
 
     int i = 0;
     int j = 0;
+    int index;
     
     while (i < n) {
         if (pattern[j] == pi[i]) 
@@ -58,10 +59,12 @@ void KMP(string pattern, string pi) {
         } // If there is a match continue.
         if (j == m) 
         {
-            ////cout << i - m << ' ';    // if j==m it is confirmed that we have found the pattern and we output the index
+            cout << pattern << ',';
+            cout << i - m << endl;    // if j==m it is confirmed that we have found the pattern and we output the index
             // and update j as Lps of last matched character.
             j = Lps[j - 1];
-            isInFile = true;
+            index = i - m;
+            break;
         }
         else if (i < n && pattern[j] != pi[i]) 
         {  // If there is a mismatch
@@ -75,15 +78,7 @@ void KMP(string pattern, string pi) {
             }
         }
     }
-    if(isInFile)
-    {
-        cout << "Pattern found" << endl;
-    }
-    else
-    {
-        cout << "Pattern not found" << endl;
-    }
-    
+    return index;
 }
 
 string loadFile(const string& path) {
@@ -113,9 +108,10 @@ string loadFile(const string& path) {
 int main()
 {
     string pi = loadFile("C:/Private/Algs/PiGenerator/PiGenerator/pi.txt");
-    string pattern = "15698179";
-
-    KMP(pattern, pi);
-
+    string pattern = "1569817";
+    int index = KMP(pattern, pi);
+    ofstream out("output.txt");
+    out << pattern << ',' << index;
+    out.close();
     return 0;
 }
