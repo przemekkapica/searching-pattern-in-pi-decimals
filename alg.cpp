@@ -1,6 +1,3 @@
-/***************************************************************
- * Computing pi by Binary Splitting Algorithm with GMP libarary.
- **************************************************************/
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -8,116 +5,96 @@
 
 using namespace std;
 
-struct PQT
-{
+struct PQT {
     mpz_class P, Q, T;
 };
 
-class Chudnovsky
-{
-    // Declaration
-    mpz_class A, B, C, D, E, C3_24;  // GMP Integer
-    int DIGITS, PREC, N;             // Integer
-    double DIGITS_PER_TERM;          // Long
-    clock_t t0, t1, t2;              // Time
-    PQT compPQT(int n1, int n2);     // Computer PQT (by BSA)
+class Chudnovsky {
+    mpz_class A, B, C, D, E, C3_24;     // Multi precision integers
+    int DIGITS, PRECISION, N;            
+    double DIGITS_PER_TERM;        
+    clock_t start, end;                     // Timestamps
+    PQT computePQT(int n1, int n2);     // Computer PQT (by BSA)
 
-public:
-    Chudnovsky();                    // Constructor
-    void compPi();                   // Compute PI
+    public:
+        Chudnovsky();                   
+        void getPiExpansion();            
 };
 
-/*
- * Constructor
- */
-Chudnovsky::Chudnovsky()
-{
-    // Constants
+Chudnovsky::Chudnovsky() {
+    // Constants from Chudnovsky algorithm (ref: https://en.wikipedia.org/wiki/Chudnovsky_algorithm)
     DIGITS = 100;
-    A      = 13591409;
-    B      = 545140134;
-    C      = 640320;
-    D      = 426880;
-    E      = 10005;
+    A = 13591409;
+    B = 545140134;
+    C = 640320;
+    D = 426880;
+    E = 10005;
     DIGITS_PER_TERM = 14.1816474627254776555;  // = log(53360^3) / log(10)
-    C3_24  = C * C * C / 24;
-    N      = DIGITS / DIGITS_PER_TERM;
-    PREC   = DIGITS * log2(10);
+    C3_24 = C * C * C / 24;
+    N = DIGITS / DIGITS_PER_TERM;
+    PRECISION = DIGITS * log2(10);
 }
 
-/*
- * Compute PQT (by Binary Splitting Algorithm)
- */
-PQT Chudnovsky::compPQT(int n1, int n2)
-{
+
+// Compute PQT (by Binary Splitting Algorithm)
+PQT Chudnovsky::computePQT(int n1, int n2) {
     int m;
-    PQT res;
+    PQT result;
 
     if (n1 + 1 == n2) {
-        res.P  = (2 * n2 - 1);
-        res.P *= (6 * n2 - 1);
-        res.P *= (6 * n2 - 5);
-        res.Q  = C3_24 * n2 * n2 * n2;
-        res.T  = (A + B * n2) * res.P;
-        if ((n2 & 1) == 1) res.T = - res.T;
+        result.P  = (2 * n2 - 1);
+        result.P *= (6 * n2 - 1);
+        result.P *= (6 * n2 - 5);
+        result.Q  = C3_24 * n2 * n2 * n2;
+        result.T  = (A + B * n2) * result.P;
+        if ((n2 & 1) == 1) {
+            result.T = - result.T;
+        }
     } else {
         m = (n1 + n2) / 2;
-        PQT res1 = compPQT(n1, m);
-        PQT res2 = compPQT(m, n2);
-        res.P = res1.P * res2.P;
-        res.Q = res1.Q * res2.Q;
-        res.T = res1.T * res2.Q + res1.P * res2.T;
+        PQT reccPQT1 = computePQT(n1, m);
+        PQT reccPQT2 = computePQT(m, n2);
+        result.P = reccPQT1.P * reccPQT2.P;
+        result.Q = reccPQT1.Q * reccPQT2.Q;
+        result.T = reccPQT1.T * reccPQT2.Q + reccPQT1.P * reccPQT2.T;
     }
 
-    return res;
+    return result;
 }
 
-/*
- * Compute PI
- */
-void Chudnovsky::compPi()
-{
-    cout << "**** PI Computation ( " << DIGITS << " digits )" << endl;
+void Chudnovsky::getPiExpansion() {
+    cout << "PI computation for " << DIGITS << " digits" << endl;
 
-    // Time (start)
-    t0 = clock();
+    // Timestamp for start of computation
+    start = clock();
 
-    // Compute Pi
-    PQT PQT = compPQT(0, N);
-    mpf_class pi(0, PREC);
+    // PI computation starts here
+    PQT PQT = computePQT(0, N);
+    mpf_class pi(0, PRECISION);
     pi  = D * sqrt((mpf_class)E) * PQT.Q;
     pi /= (A * PQT.Q + PQT.T);
 
-    // Time (end of computation)
-    t1 = clock();
-    cout << "TIME (COMPUTE): "
-         << (double)(t1 - t0) / CLOCKS_PER_SEC
+    // Timestamp for end of computation
+    end = clock();
+    cout << "Computation took "
+         << (double)(end - start) / CLOCKS_PER_SEC
          << " seconds." << endl;
 
-    // Output
+    // Outputs to file
     ofstream ofs ("pi.txt");
     ofs.precision(DIGITS + 1);
     ofs << pi << endl;
-
-    // Time (end of writing)
-    t2 = clock();
-    cout << "TIME (WRITE)  : "
-         << (double)(t2 - t1) / CLOCKS_PER_SEC
-         << " seconds." << endl;
 }
 
-int main()
-{
-    try
-    {
-        // Instantiation
-        Chudnovsky objMain;
-
-        // Compute PI
-        objMain.compPi();
+int main() {
+    Chudnovsky chudnovsky;
+    
+    try {    
+        // Computes pi and saves the result to text file
+        chudnovsky.getPiExpansion();
     }
     catch (...) {
-        cout << "ERROR!" << endl;
+        cout << "Unexpected error occured" << endl;
         return -1;
     }
 
