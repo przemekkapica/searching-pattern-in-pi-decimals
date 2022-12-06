@@ -13,17 +13,17 @@ class Chudnovsky {
     mpz_class A, B, C, D, E, C3_24;     // Multi precision integers
     int DIGITS, PRECISION, N;            
     double DIGITS_PER_TERM;        
-    clock_t start, end;                     // Timestamps
+    clock_t start, end;                 // Timestamps
     PQT computePQT(int n1, int n2);     // Computer PQT (by BSA)
 
     public:
-        Chudnovsky();                   
+        Chudnovsky(int digits);                   
         void getPiExpansion();            
 };
 
-Chudnovsky::Chudnovsky() {
+Chudnovsky::Chudnovsky(int digits) {
     // Constants from Chudnovsky algorithm (ref: https://en.wikipedia.org/wiki/Chudnovsky_algorithm)
-    DIGITS = 100;
+    DIGITS = digits;
     A = 13591409;
     B = 545140134;
     C = 640320;
@@ -86,10 +86,27 @@ void Chudnovsky::getPiExpansion() {
     ofs << pi << endl;
 }
 
-int main() {
-    Chudnovsky chudnovsky;
-    
-    try {    
+struct Arguments {
+    int piDigits;
+};
+
+Arguments parseArguments(int argc, char *argv[]) {
+    Arguments args;
+    for (int i = 0; i < argc; i++) {   
+        if (strcmp(argv[i], "-d") == 0 && i + 1 < argc) {
+            args.piDigits = atoi(argv[i + 1]);
+        } 
+    }
+    return args;
+}
+
+int main(int argc, char *argv[]) {
+    try { 
+        Arguments args = parseArguments(argc, argv);
+        
+        Chudnovsky chudnovsky;
+        chudnovsky(args.piDigits);
+
         // Computes pi and saves the result to text file
         chudnovsky.getPiExpansion();
     }
