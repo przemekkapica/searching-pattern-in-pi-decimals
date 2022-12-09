@@ -3,12 +3,10 @@
 #include <fstream>
 #include <gmpxx.h>
 
-#pragma omp parallel
-
 using namespace std;
 
 struct BinarySplit {
-    mpz_class D, H, L;
+    mpz_class P, Q, T;
 };
 
 struct Arguments {
@@ -71,46 +69,52 @@ BinarySplit Chudnovsky::computeWithBinarySplit(int n1, int n2) {
     int m;
     BinarySplit result;
 
+
+
     if (n1 + 1 == n2) {
         int t = multiply_bitewise(6, n2);
-        result.D = ((n2 >> 1) - 1);
-        result.D *= (t - 1);
-        result.D *= (t - 5);
-        result.H = C3_24 * n2 * n2 * n2;
-        result.L = (A + B * n2) * result.D;
+        result.P = ((n2 >> 1) - 1);
+        result.P *= (t - 1);
+        result.P *= (t - 5);
+        result.Q = C3_24 * n2 * n2 * n2;
+        result.T = (A + B * n2) * result.P;
         if ((n2 & 1) == 1) {
-            result.L = -result.L;
+            result.T = -result.T;
         }
     }
     else {
         m = (n1 + n2) / 2;
         BinarySplit reccBinarySplit1 = computeWithBinarySplit(n1, m);
         BinarySplit reccBinarySplit2 = computeWithBinarySplit(m, n2);
-        result.D = reccBinarySplit1.D * reccBinarySplit2.D;
-        result.H = reccBinarySplit1.H * reccBinarySplit2.H;
-        result.L = reccBinarySplit1.L * reccBinarySplit2.H + reccBinarySplit1.D * reccBinarySplit2.L;
+        result.P = reccBinarySplit1.P * reccBinarySplit2.P;
+        result.Q = reccBinarySplit1.Q * reccBinarySplit2.Q;
+        result.T = reccBinarySplit1.T * reccBinarySplit2.Q + reccBinarySplit1.P * reccBinarySplit2.T;
     }
+
+
 
     return result;
 }
 
+
+
 void Chudnovsky::getPiExpansion() {
     cout << "PI computation for " << DIGITS << " digits" << endl;
 
-    // Timestamp for start of computation
+   // Timestamp for start of computation
     start = clock();
 
     // PI computation starts here
     BinarySplit split = computeWithBinarySplit(0, N);
     mpf_class pi(0, PRECISION);
-    pi = D * sqrt((mpf_class)E) * split.H;
-    pi /= (A * split.H + split.L);
+    pi = D * sqrt((mpf_class)E) * split.Q;
+    pi /= (A * split.Q + split.T);
 
-    // Timestamp for end of computation
-    end = clock();
+       // Timestamp for end of computation
+        end = clock();
     cout << "Computation took " << (double)(end - start) / CLOCKS_PER_SEC << " seconds." << endl;
 
-    // Outputs to file
+  // Outputs to file
     ofstream ofs("pi.txt");
     ofs.precision(DIGITS + 1);
     ofs << pi << endl;
@@ -126,12 +130,14 @@ Arguments parseArguments(int argc, char* argv[]) {
     return args;
 }
 
+
+
 int main(int argc, char* argv[]) {
     try {
         Arguments args = parseArguments(argc, argv);
-
+        
         Chudnovsky chudnovsky = Chudnovsky(args.piDigits);
-
+        
         // Computes pi and saves the result to text file
         chudnovsky.getPiExpansion();
     }
@@ -139,6 +145,6 @@ int main(int argc, char* argv[]) {
         cout << "Unexpected error occured" << endl;
         return -1;
     }
-
+    
     return 0;
 }
