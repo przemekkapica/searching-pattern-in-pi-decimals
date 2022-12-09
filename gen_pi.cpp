@@ -5,16 +5,16 @@
 
 using namespace std;
 
-struct PQT {
-    mpz_class P, Q, T;
+struct BinarySplit {
+    mpz_class D, H, L;
 };
 
 class Chudnovsky {
-    mpz_class A, B, C, D, E, C3_24;     // Multi precision integers
+    mpz_class A, B, C, D, E, C3_24; // Multi precision integers
     int DIGITS, PRECISION, N;            
     double DIGITS_PER_TERM;        
-    clock_t start, end;                 // Timestamps
-    PQT computePQT(int n1, int n2);     // Computer PQT (by BSA)
+    clock_t start, end; // Timestamps
+    BinarySplit computeWithBinarySplit(int n1, int n2); // Computes using Binary Split Algorithm
 
     public:
         Chudnovsky(int digits);                   
@@ -36,27 +36,28 @@ Chudnovsky::Chudnovsky(int digits) {
 }
 
 
-// Compute PQT (by Binary Splitting Algorithm)
-PQT Chudnovsky::computePQT(int n1, int n2) {
+// Compute BinarySplit (by Binary Splitting Algorithm)
+// ref: https://en.wikipedia.org/wiki/Binary_splitting#:~:text=In%20mathematics%2C%20binary%20splitting%20is,hypergeometric%20series%20at%20rational%20points.
+BinarySplit Chudnovsky::computeBinarySplit(int n1, int n2) {
     int m;
-    PQT result;
+    BinarySplit result;
 
     if (n1 + 1 == n2) {
-        result.P  = (2 * n2 - 1);
-        result.P *= (6 * n2 - 1);
-        result.P *= (6 * n2 - 5);
-        result.Q  = C3_24 * n2 * n2 * n2;
-        result.T  = (A + B * n2) * result.P;
+        result.D  = (2 * n2 - 1);
+        result.D *= (6 * n2 - 1);
+        result.D *= (6 * n2 - 5);
+        result.H  = C3_24 * n2 * n2 * n2;
+        result.L  = (A + B * n2) * result.D;
         if ((n2 & 1) == 1) {
-            result.T = - result.T;
+            result.L = - result.L;
         }
     } else {
         m = (n1 + n2) / 2;
-        PQT reccPQT1 = computePQT(n1, m);
-        PQT reccPQT2 = computePQT(m, n2);
-        result.P = reccPQT1.P * reccPQT2.P;
-        result.Q = reccPQT1.Q * reccPQT2.Q;
-        result.T = reccPQT1.T * reccPQT2.Q + reccPQT1.P * reccPQT2.T;
+        BinarySplit reccBinarySplit1 = computeBinarySplit(n1, m);
+        BinarySplit reccBinarySplit2 = computeBinarySplit(m, n2);
+        result.D = reccBinarySplit1.D * reccBinarySplit2.D;
+        result.H = reccBinarySplit1.H * reccBinarySplit2.H;
+        result.L = reccBinarySplit1.L * reccBinarySplit2.H + reccBinarySplit1.D * reccBinarySplit2.L;
     }
 
     return result;
@@ -69,16 +70,14 @@ void Chudnovsky::getPiExpansion() {
     start = clock();
 
     // PI computation starts here
-    PQT PQT = computePQT(0, N);
+    BinarySplit split = computeBinarySplit(0, N);
     mpf_class pi(0, PRECISION);
-    pi  = D * sqrt((mpf_class)E) * PQT.Q;
-    pi /= (A * PQT.Q + PQT.T);
+    pi = D * sqrt((mpf_class)E) * split.H;
+    pi /= (A * split.H + split.L);
 
     // Timestamp for end of computation
     end = clock();
-    cout << "Computation took "
-         << (double)(end - start) / CLOCKS_PER_SEC
-         << " seconds." << endl;
+    cout << "Computation took " << (double)(end - start) / CLOCKS_PER_SEC << " seconds." << endl;
 
     // Outputs to file
     ofstream ofs ("pi.txt");
