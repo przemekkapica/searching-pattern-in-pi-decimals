@@ -1,4 +1,8 @@
+.vscode/
+
 main
 gen_pi
 output.txt
 kmp
+pi.txt
+remove_dot
