@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "iostream": "cpp",
-        "__threading_support": "cpp",
-        "ostream": "cpp",
-        "unordered_map": "cpp"
-    }
-}

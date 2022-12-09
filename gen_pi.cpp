@@ -3,6 +3,8 @@
 #include <fstream>
 #include <gmpxx.h>
 
+#pragma omp parallel
+
 using namespace std;
 
 struct BinarySplit {
