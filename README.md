@@ -20,8 +20,8 @@ Generates pi with 1000000 digits of decimal expansion
 ### Search a pattern
 Compile the file
 
-```g++ -o kmp kmp.cpp```
+```g++ kmp.cpp -o kmp```
 
 Tells at what index the given pattern occurs, or -1 if it doesn't
 
-```./kmp -i "path_to_pi" -p "523"```
+```kmp.exe -i "path_to_pi" -p "523"```
